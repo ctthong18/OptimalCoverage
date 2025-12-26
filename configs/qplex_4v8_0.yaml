@@ -81,11 +81,70 @@ logging:
 
 # Evaluation settings
 evaluation:
-  n_eval_episodes: 20  # More evaluation episodes
-  eval_deterministic: true
-  render_eval: false
-  save_videos: false
-  video_dir: "./videos"
+  # Legacy settings (for backward compatibility with old evaluation method)
+  n_eval_episodes: 20  # Number of episodes for simple evaluation (more for larger env)
+  eval_deterministic: true  # Use deterministic policy during evaluation
+  render_eval: false  # Whether to render during evaluation
+  save_videos: false  # Whether to save evaluation videos
+  video_dir: "./videos"  # Directory to save videos
+  
+  # ============================================================================
+  # ImprovedEvaluator Settings (for 2-group evaluation with statistical analysis)
+  # ============================================================================
+  # These settings enable robust evaluation with multiple runs, outlier removal,
+  # and confidence intervals to reduce variance and improve result stability.
+  
+  # Basic evaluation parameters
+  n_eval_runs: 5  # Number of independent evaluation runs with different seeds
+                  # More runs = more stable results but longer evaluation time
+                  # Recommended: 3-10 runs depending on variance tolerance
+  
+  n_episodes_per_run: 400  # Number of episodes per evaluation run
+                           # Total episodes = n_eval_runs × n_episodes_per_run
+                           # Example: 5 runs × 400 episodes = 2000 total episodes
+                           # Recommended: 200-500 episodes per run
+  
+  n_warmup_episodes: 10  # Number of warm-up episodes before collecting metrics
+                         # Helps stabilize RNN hidden states and agent behavior
+                         # These episodes are not counted in final statistics
+                         # Recommended: 5-20 episodes, more if using RNN
+                         # Note: This env uses RNN, so warm-up is important
+  
+  batch_size: 50  # Batch size for evaluation (reserved for future optimization)
+                  # Currently not used but may enable batched evaluation later
+                  # Recommended: 25-100 depending on memory constraints
+  
+  # Statistical analysis settings
+  remove_outliers: true  # Whether to remove statistical outliers from results
+                         # Helps reduce impact of anomalous episodes on metrics
+                         # Recommended: true for more stable and reliable results
+  
+  outlier_method: 'iqr'  # Method for detecting outliers:
+                         # - 'iqr': Interquartile Range method (robust, recommended)
+                         #   Removes values outside [Q1 - threshold×IQR, Q3 + threshold×IQR]
+                         # - 'zscore': Z-score method (assumes normal distribution)
+                         #   Removes values with |z-score| > threshold
+  
+  outlier_threshold: 1.5  # Threshold for outlier detection
+                          # For IQR method: 1.5 is standard (moderate), 3.0 is conservative
+                          # For zscore method: 3.0 is standard (99.7% of data retained)
+                          # Lower values = more aggressive outlier removal
+  
+  confidence_level: 0.95  # Confidence level for confidence intervals (0-1)
+                          # 0.95 = 95% confidence interval (standard in research)
+                          # 0.99 = 99% confidence interval (more conservative)
+                          # Results will include mean ± confidence interval
+  
+  # Reproducibility settings
+  seeds: [42, 142, 242, 342, 442]  # Random seeds for each evaluation run
+                                    # One seed per run (length must equal n_eval_runs)
+                                    # If null, seeds will be auto-generated as [42, 142, 242, ...]
+                                    # Using fixed seeds ensures reproducible results
+  
+  # Group evaluation settings
+  n_groups: 2  # Number of agent groups to evaluate separately
+               # Currently fixed at 2 for comparing two different agent configurations
+               # Each group gets independent metrics and statistical analysis
 
 # Device settings
 device:

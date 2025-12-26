@@ -1,7 +1,18 @@
-from setuptools import setup, find_packages
- 
+"""MATE: The Multi-Agent Tracking Environment."""
+
+import pathlib
+import sys
+
+from setuptools import setup
+
+
+HERE = pathlib.Path(__file__).absolute().parent
+
+sys.path.insert(0, str(HERE / 'mate'))
+import version  # pylint: disable=import-error,wrong-import-position
+
+
 setup(
-    name="modified_mate", #Name
-    version="1.0", #Version
-    packages = find_packages()  # Automatically find the packages that are recognized in the '__init__.py'.
+    name='mate',
+    version=version.__version__,
 )

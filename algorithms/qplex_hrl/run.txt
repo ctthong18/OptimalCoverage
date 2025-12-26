@@ -1,0 +1,7 @@
+# Train QPLEX HRL
+python3 -m runners.train_qplex_hrl_ray --config configs/qplex_hrl_4v4_9_ray.yaml --num-workers 8
+
+# Resume training
+python runners/train_qplex_hrl.py --config configs/qplex_hrl_4v4_9.yaml --resume models/qplex_hrl/qplex_hrl_40000.pth
+
+wsl -d Ubuntu

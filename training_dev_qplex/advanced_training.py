@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class AdvancedTraining:
     def __init__(self, learner, config):
         self.learner = learner

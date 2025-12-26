@@ -1,0 +1,149 @@
+# QPLEX HRL Configuration for MATE 4v4 environment
+# Hierarchical Reinforcement Learning with QPLEX
+name: "QPLEX_HRL_4v4_9"
+env_name: "MATE-4v4-9"
+seed: 42
+
+# Environment settings
+env:
+  config_file: "mate/assets/MATE-4v4-9.yaml"
+  max_episode_steps: 2000
+  reward_type: "dense"
+  render_mode: "human"  # "human" or "rgb_array"
+  window_size: 800
+
+# Training settings
+training:
+  total_timesteps: 80000  # Reduced for HRL complexity
+  learning_starts: 2000   # Start learning earlier for HRL
+  train_freq: 1           # Train every step for better HRL learning
+  target_update_interval: 500
+  gradient_steps: 1
+  batch_size: 64          # Larger batch for stable HRL training
+  buffer_size: 100000     # Smaller buffer for faster turnover
+  n_episodes: 1000
+  
+# Algorithm settings
+algorithm:
+  name: "QPLEX_HRL"
+  learning_rate: 0.0005
+  gamma: 0.99
+  tau: 0.005
+  epsilon_start: 1.0
+  epsilon_end: 0.05
+  epsilon_decay: 0.9995   # Slower decay for HRL exploration
+  dueling: true
+  double_q: true
+  
+# Network architecture (Enhanced from qplex_dev + HRL)
+network:
+  # Individual Q-networks (from qplex_dev)
+  q_network:
+    type: "attention_rnn"   # attention_rnn | hierarchical_rnn | bi_rnn | rnn | mlp
+    hidden_dims: [256, 128]
+    use_rnn: true
+    rnn_hidden_dim: 128
+    rnn_layers: 2
+    rnn_type: "lstm"        # "lstm" or "gru"
+    use_attention: true
+    num_attention_heads: 4
+    dropout: 0.1
+    activation: "relu"
+  
+  # Mixing network (Enhanced adaptive mixing)
+  mixing_network:
+    type: "adaptive"        # adaptive | hierarchical | attention | qplex
+    hidden_dims: [256, 256]
+    use_hypernet: true
+    dueling: true
+    complexity_threshold: 0.6
+    num_attention_heads: 4
+    dropout: 0.0
+    activation: "relu"
+  
+  # State encoder (from qplex_dev)
+  use_state_encoder: true
+  state_encoder_hidden: 256
+  
+  # HRL specific configuration
+  hrl:
+    # Hierarchical target selection
+    selector_hidden_dim: 128
+    frame_skip: 5           # Multi-timescale selection (key HRL parameter)
+    use_attention: true
+    multi_selection: true   # Enable multi-target selection
+    
+    # Coverage optimization
+    coverage_weight: 1.0
+    exploration_bonus: 0.1
+    coverage_reward_weight: 0.5
+    selection_entropy_weight: 0.01
+    hierarchical_loss_weight: 0.1
+    
+    # Environment integration (similar to MATE HRL)
+    target_agent_type: "greedy"  # "greedy" or "random"
+    reward_coefficients:
+      coverage_rate: 1.0    # Primary optimization target
+    reward_reduction: "mean"
+    
+  # Target network update
+  target_update:
+    method: "soft"
+    tau: 0.005
+
+# Agent settings
+agents:
+  n_agents: 4
+  obs_dim: null  # Will be set automatically from environment
+  action_dim: null  # Will be set automatically from environment
+  state_dim: null  # Will be set automatically from environment
+  
+# Logging and evaluation
+logging:
+  log_interval: 1000      # More frequent logging for HRL
+  eval_interval: 4000     # Less frequent eval (HRL is slower)
+  save_interval: 10000
+  log_dir: "./logs/qplex_hrl"
+  model_dir: "./models/qplex_hrl"
+  tensorboard: true
+  wandb: false
+  wandb_project: "qplex-hrl-mate"
+  wandb_entity: null
+
+# Evaluation settings
+evaluation:
+  # Basic evaluation
+  n_eval_episodes: 10
+  eval_deterministic: true
+  render_eval: false
+  save_videos: false
+  video_dir: "./videos"
+  
+  # ImprovedEvaluator settings (for comprehensive evaluation)
+  n_eval_runs: 3          # Fewer runs for HRL (slower)
+  n_episodes_per_run: 200 # Fewer episodes per run
+  n_warmup_episodes: 10   # Important for HRL hidden state stability
+  batch_size: 50
+  remove_outliers: true
+  outlier_method: 'iqr'
+  outlier_threshold: 1.5
+  confidence_level: 0.95
+  seeds: [42, 142, 242]   # Match n_eval_runs
+  n_groups: 2
+
+# Device settings
+device:
+  use_cuda: true
+  cuda_device: 0
+
+# Reproducibility
+reproducibility:
+  deterministic: true
+  benchmark: false
+
+# Video recording (optional)
+video:
+  enabled: true
+  fps: 30
+  record_every: 8000
+  max_frames: 1500

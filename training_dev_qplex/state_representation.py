@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def get_enhanced_state_representation(env):
     """State representation được cải tiến từ cả 2 bài báo"""
     

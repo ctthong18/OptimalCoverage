@@ -1,0 +1,178 @@
+seed: 42
+
+device:
+  use_cuda: true
+
+env:
+  name: MATE
+  config_file: mate/assets/MATE-4v4-9.yaml
+  render_mode: human
+  window_size: 900
+
+algorithm:
+  learning_rate: 0.0005
+  gamma: 0.99
+  tau: 0.005
+  epsilon_start: 1.0
+  epsilon_end: 0.05
+  epsilon_decay: 0.9995
+  dueling: true
+  double_q: true
+
+network:
+  use_state_encoder: true
+  state_encoder_hidden: 256
+  q_network:
+    type: attention_rnn         # attention_rnn | hierarchical_rnn | bi_rnn | rnn | mlp
+    hidden_dims: [256, 128]
+    use_rnn: true
+    rnn_hidden_dim: 128
+    rnn_layers: 2
+    rnn_type: lstm
+    use_attention: true
+    num_attention_heads: 4
+    dropout: 0.1
+  mixing_network:
+    type: adaptive              # adaptive | hierarchical | attention | qplex | monotonic
+    hidden_dims: [256, 256]
+    use_hypernet: true
+    dueling: true
+    complexity_threshold: 0.6
+    num_attention_heads: 4
+    dropout: 0.0
+    num_levels: 2
+
+training:
+  total_timesteps: 40000
+  learning_starts: 1000
+  train_freq: 1
+  target_update_interval: 500
+  gradient_steps: 1
+  batch_size: 64
+  buffer_size: 200000
+
+logging:
+  log_interval: 1000
+  eval_interval: 4000
+  save_interval: 10000
+  log_dir: logs/qplex_dev
+  model_dir: models/qplex_dev
+
+evaluation:
+  n_eval_episodes: 10
+
+video:
+  enabled: true
+  fps: 30
+  record_every: 8000
+  max_frames: 2000
+# QPLEX Configuration for MATE 4v4 environment
+name: "QPLEX_4v4_9"
+env_name: "MATE-4v4-9"
+seed: 42
+
+# Environment settings
+env:
+  config_file: "mate/assets/MATE-4v4-9.yaml"
+  max_episode_steps: 2000
+  reward_type: "dense"
+  render_mode: "human"  # "human" or "rgb_array"
+  window_size: 800
+
+# Training settings
+training:
+  total_timesteps: 40000
+  learning_starts: 5000
+  train_freq: 4
+  target_update_interval: 200
+  gradient_steps: 1
+  batch_size: 32
+  buffer_size: 10000
+  n_episodes: 1000
+  
+# Algorithm settings
+algorithm:
+  name: "QPLEX"
+  learning_rate: 0.0005
+  gamma: 0.99
+  tau: 0.005
+  epsilon_start: 1.0
+  epsilon_end: 0.05
+  epsilon_decay: 0.9999
+  dueling: true
+  double_q: true
+  
+# Network architecture
+network:
+  # Individual Q-networks
+  # Type options: "attention_rnn", "hierarchical_rnn", "bi_rnn", "rnn", or "mlp"
+  q_network:
+    type: "attention_rnn"  # New network types from new_network
+    hidden_dims: [256, 256]
+    use_rnn: true
+    rnn_hidden_dim: 128
+    rnn_layers: 2
+    rnn_type: "lstm"  # "lstm" or "gru"
+    use_attention: true
+    num_attention_heads: 4
+    dropout: 0.1
+    activation: "relu"  # "relu", "tanh", "leaky_relu"
+  
+  # Mixing network
+  # Type options: "adaptive", "hierarchical", "attention", or "qplex"
+  mixing_network:
+    type: "adaptive"  # Adaptive mixing from deeprec ideas
+    hidden_dims: [256, 256]
+    use_hypernet: true
+    dueling: true
+    complexity_threshold: 0.6  # For adaptive mixing
+    num_levels: 2  # For hierarchical mixing
+    num_attention_heads: 4  # For attention mixing
+    dropout: 0.0
+    activation: "relu"
+  
+  # State encoder (from deeprec ideas)
+  use_state_encoder: true
+  state_encoder_hidden: 256
+  
+  # Target network update
+  target_update:
+    method: "soft"  # "soft" or "hard"
+    tau: 0.005
+
+# Agent settings
+agents:
+  n_agents: 4
+  obs_dim: null  # Will be set automatically from environment
+  action_dim: null  # Will be set automatically from environment
+  state_dim: null  # Will be set automatically from environment
+  
+# Logging and evaluation
+logging:
+  log_interval: 2000
+  eval_interval: 2000
+  save_interval: 10000
+  log_dir: "./logs/qplex_dev"
+  model_dir: "./models/qplex_dev"
+  tensorboard: true
+  wandb: false
+  wandb_project: "qplex-mate"
+  wandb_entity: null
+
+# Evaluation settings
+evaluation:
+  n_eval_episodes: 10
+  eval_deterministic: true
+  render_eval: false
+  save_videos: false
+  video_dir: "./videos"
+
+# Device settings
+device:
+  use_cuda: true
+  cuda_device: 0
+
+# Reproducibility
+reproducibility:
+  deterministic: true
+  benchmark: false

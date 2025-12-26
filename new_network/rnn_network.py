@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from typing import Dict, List, Tuple, Optional
-from .base_networks import MLP, RNN, Attention
+from .base_network import MLP, RNN, Attention
 
 
 class RNNQNetwork(nn.Module):

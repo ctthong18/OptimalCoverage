@@ -11,3 +11,10 @@ _test*
 .venv
 
 checkpoints/
+
+models/
+*.pth 
+*.pkl
+
+logs/
+*.json

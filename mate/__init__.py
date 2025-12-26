@@ -20,12 +20,13 @@ from mate.wrappers import (
     MultiTarget,
     SingleCamera,
     SingleTarget,
+    WrapperMeta,
     WrapperSpec,
     group_reset,
     group_step,
     group_act,
     group_communicate,
-    group_observe
+    group_observe,
 )
 
 __all__ = [
@@ -34,6 +35,8 @@ __all__ = [
     "MultiTarget",
     "SingleCamera",
     "SingleTarget",
+    "WrapperMeta",
+    "WrapperSpec",
     "GreedyCameraAgent",
     "GreedyTargetAgent",
     "RandomCameraAgent",

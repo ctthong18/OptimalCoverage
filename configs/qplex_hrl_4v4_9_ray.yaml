@@ -1,0 +1,148 @@
+# QPLEX HRL Configuration for Ray RLlib (similar to MATE HRL examples)
+# Hierarchical Reinforcement Learning with QPLEX using Ray RLlib
+name: "QPLEX_HRL_4v4_9_Ray"
+env_name: "MATE-4v4-9"
+seed: 42
+
+# Environment settings (will be passed to RLlib env_config)
+env:
+  config_file: "MATE-4v4-9.yaml"  # Relative to mate/assets/
+  max_episode_steps: 2000
+  reward_type: "dense"
+  render_mode: "human"
+  window_size: 800
+
+# Training settings (Ray RLlib specific)
+training:
+  total_timesteps: 100000 # 10M timesteps (similar to MATE HRL)
+  learning_starts: 5000
+  train_freq: 5120          # timesteps_per_iteration
+  target_update_interval: 500  # target_network_update_freq
+  gradient_steps: 1
+  batch_size: 1024          # train_batch_size
+  buffer_size: 2000         # Will be adjusted based on workers
+  n_episodes: 1000
+  
+# Algorithm settings (QPLEX HRL specific)
+algorithm:
+  name: "QPLEX_HRL"
+  learning_rate: 0.0001     # 1e-4 (similar to MATE HRL)
+  gamma: 0.99
+  tau: 0.005
+  epsilon_start: 1.0
+  epsilon_end: 0.02         # Lower than standard (similar to MATE HRL)
+  epsilon_decay: 0.9995
+  dueling: true
+  double_q: true
+  
+# Network architecture (Enhanced HRL configuration)
+network:
+  # Individual Q-networks (from qplex_dev)
+  q_network:
+    type: "attention_rnn"   # attention_rnn | hierarchical_rnn | bi_rnn | rnn | mlp
+    hidden_dims: [512, 256] # Larger networks (similar to MATE HRL)
+    use_rnn: true
+    rnn_hidden_dim: 256     # lstm_cell_size in RLlib
+    rnn_layers: 2
+    rnn_type: "lstm"
+    use_attention: true
+    num_attention_heads: 4
+    dropout: 0.1
+    activation: "tanh"      # Similar to MATE HRL
+  
+  # Mixing network (Enhanced adaptive mixing)
+  mixing_network:
+    type: "adaptive"
+    hidden_dims: [256, 256]
+    use_hypernet: true
+    dueling: true
+    complexity_threshold: 0.6
+    num_attention_heads: 4
+    dropout: 0.0
+    activation: "relu"
+  
+  # State encoder
+  use_state_encoder: true
+  state_encoder_hidden: 256
+  
+  # HRL specific configuration (similar to MATE HRL)
+  hrl:
+    # Hierarchical target selection
+    selector_hidden_dim: 128
+    frame_skip: 5           # Key HRL parameter (similar to MATE HRL)
+    use_attention: true
+    multi_selection: true   # Enable multi-target selection (similar to MATE HRL)
+    
+    # Coverage optimization (primary focus)
+    coverage_weight: 1.0
+    exploration_bonus: 0.1
+    coverage_reward_weight: 0.5
+    selection_entropy_weight: 0.01  # RLlib policy will use this
+    hierarchical_loss_weight: 0.1
+    
+    # Environment integration (exactly like MATE HRL)
+    target_agent_type: "greedy"
+    reward_coefficients:
+      coverage_rate: 1.0    # Primary optimization target (similar to MATE HRL)
+    reward_reduction: "mean"  # Shared reward (similar to MATE HRL)
+    
+  # Target network update
+  target_update:
+    method: "soft"
+    tau: 0.005
+
+# Agent settings
+agents:
+  n_agents: 4
+  obs_dim: null  # Will be set automatically from environment
+  action_dim: null  # Will be set automatically from environment
+  state_dim: null  # Will be set automatically from environment
+  
+# Logging and evaluation (Ray RLlib specific)
+logging:
+  log_interval: 1000
+  eval_interval: 4000
+  save_interval: 10000
+  log_dir: "./logs/qplex_hrl_ray"
+  model_dir: "./models/qplex_hrl_ray"
+  tensorboard: true
+  wandb: true               # Enable W&B for Ray RLlib
+  wandb_project: "qplex-hrl-mate-ray"
+  wandb_entity: null
+
+# Evaluation settings
+evaluation:
+  n_eval_episodes: 10
+  eval_deterministic: true
+  render_eval: false
+  save_videos: false
+  video_dir: "./videos"
+
+# Ray RLlib specific settings
+ray:
+  # Resource allocation
+  num_workers: 4            # Number of rollout workers
+  num_envs_per_worker: 8    # Environments per worker
+  num_gpus: 0.25           # GPUs for trainer
+  num_cpus_for_driver: 1   # CPUs for trainer
+  
+  # Training configuration
+  batch_mode: "complete_episodes"
+  rollout_fragment_length: 0
+  metrics_num_episodes_for_smoothing: 25
+  grad_norm_clipping: 1000.0
+  
+  # Checkpointing
+  checkpoint_freq: 20
+  checkpoint_at_end: true
+  max_failures: -1
+
+# Device settings
+device:
+  use_cuda: true
+  cuda_device: 0
+
+# Reproducibility
+reproducibility:
+  deterministic: true
+  benchmark: false

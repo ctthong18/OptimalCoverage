@@ -190,10 +190,23 @@ class QPLEXModel(nn.Module):
             new_hidden.append(h)
         
         q_values = torch.stack(q_values, dim=1)  # (batch_size, n_agents, action_dim)
-        
-        # Get total Q-value through mixing network
-        q_total = self.mixing_network(q_values.max(dim=-1)[0], state)  # Use max Q-value for mixing
-        
+
+        # get individual q (max over actions) => (batch_size, n_agents)
+        q_individual = q_values.max(dim=-1)[0]
+
+        # Defensive checks / reshape
+        if q_individual.dim() == 1:
+            if q_individual.numel() == batch_size * self.n_agents:
+                q_individual = q_individual.view(batch_size, self.n_agents)
+            else:
+                raise RuntimeError(f"q_individual has wrong shape {q_individual.shape}, expected (batch, {self.n_agents})")
+        elif q_individual.dim() == 3 and q_individual.size(-1) == 1:
+            q_individual = q_individual.squeeze(-1)
+
+        if not (q_individual.dim() == 2 and q_individual.size(1) == self.n_agents):
+            raise RuntimeError(f"q_individual has wrong shape {q_individual.shape}, expected (batch, {self.n_agents})")
+
+        q_total = self.mixing_network(q_individual, state)
         return q_values, q_total, new_hidden
     
     def get_q_values(self, obs: torch.Tensor, hidden: Optional[List[Tuple]] = None) -> Tuple[torch.Tensor, List[Tuple]]:
