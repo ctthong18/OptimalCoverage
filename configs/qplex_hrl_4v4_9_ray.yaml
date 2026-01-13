@@ -19,8 +19,8 @@ training:
   train_freq: 5120          # timesteps_per_iteration
   target_update_interval: 500  # target_network_update_freq
   gradient_steps: 1
-  batch_size: 1024          # train_batch_size
-  buffer_size: 2000         # Will be adjusted based on workers
+  batch_size: 256          # train_batch_size
+  buffer_size: 10000       # Will be adjusted based on workers
   n_episodes: 1000
   
 # Algorithm settings (QPLEX HRL specific)
@@ -40,20 +40,20 @@ network:
   # Individual Q-networks (from qplex_dev)
   q_network:
     type: "attention_rnn"   # attention_rnn | hierarchical_rnn | bi_rnn | rnn | mlp
-    hidden_dims: [512, 256] # Larger networks (similar to MATE HRL)
+    hidden_dims: [256, 128] # Larger networks (similar to MATE HRL)
     use_rnn: true
-    rnn_hidden_dim: 256     # lstm_cell_size in RLlib
-    rnn_layers: 2
+    rnn_hidden_dim: 128     # lstm_cell_size in RLlib
+    rnn_layers: 1
     rnn_type: "lstm"
     use_attention: true
-    num_attention_heads: 4
+    num_attention_heads: 1
     dropout: 0.1
     activation: "tanh"      # Similar to MATE HRL
   
   # Mixing network (Enhanced adaptive mixing)
   mixing_network:
     type: "adaptive"
-    hidden_dims: [256, 256]
+    hidden_dims: [128, 128]
     use_hypernet: true
     dueling: true
     complexity_threshold: 0.6
@@ -100,13 +100,13 @@ agents:
   
 # Logging and evaluation (Ray RLlib specific)
 logging:
-  log_interval: 1000
-  eval_interval: 4000
+  log_interval: 5000
+  eval_interval: 5000
   save_interval: 10000
   log_dir: "./logs/qplex_hrl_ray"
   model_dir: "./models/qplex_hrl_ray"
   tensorboard: true
-  wandb: true               # Enable W&B for Ray RLlib
+  wandb: false               # Enable W&B for Ray RLlib
   wandb_project: "qplex-hrl-mate-ray"
   wandb_entity: null
 
@@ -121,13 +121,13 @@ evaluation:
 # Ray RLlib specific settings
 ray:
   # Resource allocation
-  num_workers: 4            # Number of rollout workers
-  num_envs_per_worker: 8    # Environments per worker
-  num_gpus: 0.25           # GPUs for trainer
+  num_workers: 1            # Number of rollout workers
+  num_envs_per_worker: 1    # Environments per worker
+  num_gpus: 0        # GPUs for trainer
   num_cpus_for_driver: 1   # CPUs for trainer
   
   # Training configuration
-  batch_mode: "complete_episodes"
+  batch_mode: "truncate_episodes"
   rollout_fragment_length: 0
   metrics_num_episodes_for_smoothing: 25
   grad_norm_clipping: 1000.0
